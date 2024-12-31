@@ -1,0 +1,51 @@
+services:
+  log:
+    image: amir20/dozzle
+    init: true
+    network_mode: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  database:
+    image: mariadb
+    restart: unless-stopped
+    init: true
+    network_mode: host
+    volumes:
+      - ./bootstrap.sql:/docker-entrypoint-initdb.d/bootstrap.sql
+    environment:
+      MARIADB_ROOT_PASSWORD: task
+      MARIADB_USER: task
+      MARIADB_DATABASE: task
+      MARIADB_PASSWORD: task
+    healthcheck:
+      start_period: 30s
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    develop:
+      watch:
+        - path: bootstrap.sql
+          action: restart
+
+  middleware:
+    image: exchange
+    build:
+      context: .
+      network: host
+    restart: unless-stopped
+    init: true
+    network_mode: host
+    healthcheck:
+      test: ["CMD", "curl", "-f", "127.0.0.1:7777"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    depends_on:
+      database:
+        condition: service_healthy
+    develop:
+      watch:
+        - path: main.go
+          action: rebuild
