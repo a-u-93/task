@@ -31,6 +31,13 @@ services:
 
   middleware:
     image: exchange
+    environment:
+      - MARIADB_ROOT_PASSWORD
+      - MARIADB_DATABASE
+      - MARIADB_ADDRESS
+      - MARIADB_USER
+      - MARIADB_PASSWORD
+      - MIDDLEWARE_ADDRESS
     build:
       context: .
       network: host
@@ -47,5 +54,30 @@ services:
         condition: service_healthy
     develop:
       watch:
-        - path: main.go
+        - path: cmd/api/main.go, internal
           action: rebuild
+    entrypoint: /usr/bin/api
+
+  cron:
+    image: exchange
+    environment:
+      - MARIADB_ROOT_PASSWORD
+      - MARIADB_DATABASE
+      - MARIADB_ADDRESS
+      - MARIADB_USER
+      - MARIADB_PASSWORD
+      - MIDDLEWARE_ADDRESS
+    build:
+      context: .
+      network: host
+    restart: unless-stopped
+    init: true
+    network_mode: host
+    depends_on:
+      database:
+        condition: service_healthy
+    develop:
+      watch:
+        - path: cmd/cron/main.go, internal
+          action: rebuild
+    entrypoint: /usr/bin/cron

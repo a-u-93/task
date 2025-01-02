@@ -13,16 +13,17 @@ run \
   tar -xvz -C /opt --strip=1
 add . /srv
 workdir /srv
-add . /srv
 run --mount=type=cache,target=/srv/cache \
   GOROOT=/opt GOCACHE=/srv/cache GOOS=linux CGO_ENABLED=0 \
     /opt/bin/go mod tidy
 run --mount=type=cache,target=/srv/cache \
   GOROOT=/opt GOCACHE=/srv/cache GOOS=linux CGO_ENABLED=0 \
-    /opt/bin/go build -o /srv/snippetbox ./...
-entrypoint ["/srv/snippetbox"]
+    /opt/bin/go build -o /usr/bin/task /srv/cmd/api/main.go
+run --mount=type=cache,target=/srv/cache \
+  GOROOT=/opt GOCACHE=/srv/cache GOOS=linux CGO_ENABLED=0 \
+    /opt/bin/go build -o /usr/bin/cron /srv/cmd/cron/main.go
 
 # from scratch as runtime
-# copy --from=buildtime /srv/snippetbox /snippetbox
+# copy --from=buildtime /srv/task /task
 # copy --from=buildtime /srv/*.gohtml /
-# entrypoint ["/snippetbox"]
+# entrypoint ["/task"]

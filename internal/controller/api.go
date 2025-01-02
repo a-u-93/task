@@ -17,9 +17,6 @@ import (
 type API struct { *aspect.Aspect }
 
 func (api *API) dayExchange(w http.ResponseWriter, r *http.Request) {
-  api.Info("1")
-  upstreamApiLayout :=
-    "https://api.nbrb.by/exrates/rates?ondate=%d-%d-%d&periodicity=0"
   year, err := strconv.Atoi(r.PathValue("year"))
   if err != nil || year < 1 { http.Error(w, "year specification is invalid ",
     404) }
@@ -32,9 +29,8 @@ func (api *API) dayExchange(w http.ResponseWriter, r *http.Request) {
   if year == 0 || month == 0 || day == 0 {
     http.Error(w, "date specification is invalid", 404)
   }
-  api.Info("2")
-  renderedURL := fmt.Sprintf(upstreamApiLayout, year, month, day)
-  api.Info("3")
+  renderedURL := fmt.Sprintf("%s?ondate=%d-%d-%d&periodicity=0",
+    os.Getenv("UPSTREAM_API"), year, month, day)
   api.Info("rendered upstream API URL", "url", renderedURL)
   response, err := http.Get(renderedURL)
   if err != nil {
@@ -46,12 +42,13 @@ func (api *API) dayExchange(w http.ResponseWriter, r *http.Request) {
     api.Error("upstream API response parsing", "status", "failed")
     http.Error(w, "Upstream API response parsing failed.", 404)
   }
-  defer response.Body.Close()
   // api.Info("upstream API response", "body", string(body))
-  view.DayExchangePersisted(api.Aspect, w, string(body))
+  view.DayExchangePersisted(api.Aspect, w, string(body), year, month, day)
 }
 
-func (api *API) historyExchange(w http.ResponseWriter, r *http.Request) { }
+func (api *API) historyExchange(w http.ResponseWriter, r *http.Request) {
+  view.HistoryExchangeRendered(api.Aspect, w)
+}
 
 func (api *API) Listening() {
   address := flag.String("address", os.Getenv("MIDDLEWARE_ADDRESS"),
