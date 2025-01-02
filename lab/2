@@ -1,0 +1,34 @@
+package main
+
+import (
+  "time"
+  "strconv"
+  "encoding/json"
+  "log"
+)
+
+var documentJSON string = `
+{ "time": "2024-12-31T00:00:00Z" }
+`
+
+type documentType struct {
+  Time time.Time `json:"time"`
+}
+
+type CustomTime time.Time
+
+func (ct *CustomTime) UnmarshalJSON(data []byte) error {
+  var err error
+  var vanillaTime time.Time
+  unquotedString, err := strconv.Unquote(string(data))
+  if err != nil { panic(err) }
+  vanillaTime, err = time.Parse("2006-01-02T00:00:00", unquotedString)
+  if err != nil { panic(err) }
+}
+
+func main() {
+  documentInstance := new(documentType)
+  err := json.Unmarshal([]byte(documentJSON), &documentInstance)
+  if err != nil { log.Fatal(err) }
+  log.Print(documentInstance)
+}

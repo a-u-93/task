@@ -1,0 +1,13 @@
+package main
+
+import (
+  "log"
+  "time"
+)
+
+func main() {
+  var s string = "2024-12-31T00:00:00"
+  t, err := time.Parse("2006-01-02T00:00:00", s)
+  if err != nil { log.Fatal(err) }
+  log.Printf("%#v", t)
+}
